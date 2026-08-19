@@ -200,15 +200,6 @@
     }
     .maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: #0b1422; }
     .maplibregl-ctrl-attrib { display: none !important; }
-    @media (max-width: 900px) {
-      .kpis { display: none; }
-      .feed {
-        top: auto; right: var(--safe-r); left: var(--safe-l); width: auto;
-        bottom: calc(var(--safe-b) + 74px); height: 38vh; max-height: 38vh;
-      }
-      .legend, .detail { display: none !important; }
-      .timeline { width: calc(100vw - 24px); }
-    }
 
     .magbox {
       top: calc(var(--safe-t) + 378px); left: var(--safe-l);
@@ -230,9 +221,6 @@
     .timeline { bottom: var(--safe-b); }
     .tag.mag4 { color: #ffd39a; border-color: color-mix(in srgb, var(--amber) 55%, transparent); }
     .tag.mag5 { color: #ffc1cc; border-color: color-mix(in srgb, var(--crimson) 55%, transparent); }
-    @media (max-width: 900px) {
-      .magbox, .spark { display: none; }
-    }
 
     .magrow .q {
       display: inline-flex; align-items: center; justify-content: center;
@@ -267,9 +255,141 @@
     .kp-sheet.show { display: block; }
     .kp-sheet h3 { font-family: Syne, sans-serif; font-size: 1rem; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
     .kp-sheet .x { float: right; padding: 4px 8px; font-size: .7rem; }
+    .sheet-handle { display: none; }
+    .narrow { display: none; }
     .top-actions #btnKp { display: none; }
+
     @media (max-width: 900px) {
+      .top {
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+      }
+      .brand { gap: 8px; flex: 1; min-width: 0; }
+      .brand p, .brand .by { display: none; }
+      .brand h1 { font-size: .82rem; letter-spacing: .03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .mark { width: 28px; height: 28px; }
+      .top-actions {
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        flex-wrap: nowrap;
+        gap: 6px;
+        padding-bottom: 2px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .top-actions::-webkit-scrollbar { display: none; }
       .top-actions #btnKp { display: inline-flex; }
+      .wide { display: none; }
+      .narrow { display: inline; }
+      .live { padding: 7px 8px; font-size: 0; gap: 0; }
+      button { padding: 8px 11px; font-size: .78rem; white-space: nowrap; flex-shrink: 0; }
+      .kpis { display: none; }
+      .legend, .spark, .watermark { display: none !important; }
+      .maplibregl-ctrl-bottom-left { display: none !important; }
+
+      .magbox {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        align-items: center;
+        top: auto;
+        left: var(--safe-l);
+        right: var(--safe-r);
+        width: auto;
+        bottom: calc(var(--safe-b) + 50px + var(--feed-peek, 92px));
+        padding: 6px 10px;
+        border-radius: 14px;
+      }
+      .magbox .kphelp, .magbox .caveat, .magbox .watch { display: none; }
+      .magrow { margin: 0; }
+      .magrow span { font-size: .62rem; letter-spacing: .1em; }
+      .magrow b { font-size: .95rem; }
+      .magrow .q { display: none; }
+      body.feed-open .magbox { display: none; }
+
+      .feed {
+        top: auto;
+        right: var(--safe-r);
+        left: var(--safe-l);
+        width: auto;
+        bottom: calc(var(--safe-b) + 50px);
+        height: var(--feed-peek, 92px);
+        max-height: var(--feed-peek, 92px);
+      }
+      .feed.open {
+        height: min(52vh, 420px);
+        max-height: min(52vh, 420px);
+      }
+      .sheet-handle {
+        display: flex;
+        width: 100%;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        margin: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        font-size: .72rem;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        color: var(--muted);
+        box-shadow: none;
+      }
+      .sheet-handle:hover { background: transparent; box-shadow: none; transform: none; }
+      .sheet-handle::before {
+        content: "";
+        width: 36px; height: 4px; border-radius: 99px;
+        background: color-mix(in srgb, white 28%, transparent);
+      }
+      .feed-head { padding: 0 10px 8px; border-bottom: 0; }
+      .feed:not(.open) .tools, .feed:not(.open) .list { display: none; }
+      .feed.open .feed-head { border-bottom: 1px solid var(--stroke); }
+      .feed-head h2 { display: none; }
+      .tools { margin-top: 0; }
+      .tools input { font-size: 16px; padding: 8px 12px; }
+      .chips { margin-top: 6px; justify-content: center; }
+      .list { padding: 8px; -webkit-overflow-scrolling: touch; }
+      .item { padding: 10px; margin-bottom: 6px; }
+
+      .timeline {
+        width: calc(100vw - 24px);
+        padding: 8px 10px;
+        gap: 8px;
+        grid-template-columns: auto 1fr auto;
+      }
+      .clock { font-size: .65rem; max-width: 88px; white-space: normal; line-height: 1.2; text-align: right; }
+
+      .kp-sheet {
+        top: auto; left: var(--safe-l); right: var(--safe-r);
+        bottom: var(--safe-b);
+        transform: none;
+        width: auto;
+        max-height: min(70vh, 520px);
+        overflow: auto;
+        padding: 14px 14px 18px;
+        border-radius: 18px 18px 14px 14px;
+      }
+
+      .detail.show {
+        display: block;
+        left: var(--safe-l);
+        right: var(--safe-r);
+        width: auto;
+        top: calc(var(--safe-t) + 86px);
+        bottom: auto;
+        max-height: 42vh;
+        overflow: auto;
+        z-index: 5;
+      }
+      .detail h3 { font-size: 1.25rem; }
+    }
+
+    @media (max-width: 420px) {
+      .brand h1 { font-size: .76rem; }
     }
     @media (prefers-reduced-motion: reduce) {
       .mark::after, .live i { animation: none; }
@@ -290,12 +410,12 @@
       </div>
     </div>
     <div class="top-actions">
-      <span class="live"><i></i> USGS</span>
+      <span class="live"><i></i><span class="wide"> USGS</span></span>
       <button type="button" id="btnPeru">Perú</button>
       <button type="button" id="btnGlobe">Globo</button>
-      <button type="button" id="btnAlerts">Alertas M≥6.5</button>
+      <button type="button" id="btnAlerts">Alertas<span class="wide"> M≥6.5</span></button>
       <button type="button" id="btnKp" title="Escala Kp">Kp</button>
-      <button type="button" id="btnRefresh">Actualizar</button>
+      <button type="button" id="btnRefresh"><span class="wide">Actualizar</span><span class="narrow">↻</span></button>
     </div>
   </header>
 
@@ -305,7 +425,8 @@
     <div class="kpi"><span>Último</span><b id="kpiLast">—</b><small id="kpiLastPlace">hora Lima</small></div>
   </section>
 
-  <aside class="hud feed" aria-label="Lista de eventos">
+  <aside class="hud feed" id="feed" aria-label="Lista de eventos">
+    <button type="button" class="sheet-handle" id="btnFeedToggle" aria-expanded="false">Eventos</button>
     <div class="feed-head">
       <h2>Eventos recientes</h2>
       <div class="tools">
@@ -786,6 +907,24 @@
     }
 
 
+
+    function isMobile() { return window.matchMedia("(max-width: 900px)").matches; }
+    function playLabel(playing) {
+      if (playing) return isMobile() ? "Pausa" : "Pausar";
+      return isMobile() ? "▶" : "Reproducir";
+    }
+    document.getElementById("btnFeedToggle").onclick = () => {
+      const feed = document.getElementById("feed");
+      const open = feed.classList.toggle("open");
+      document.body.classList.toggle("feed-open", open);
+      document.getElementById("btnFeedToggle").setAttribute("aria-expanded", open ? "true" : "false");
+      document.getElementById("btnFeedToggle").textContent = open ? "Cerrar lista" : "Eventos";
+    };
+    document.querySelector(".magbox").addEventListener("click", (e) => {
+      if (!isMobile()) return;
+      if (e.target.closest("button")) return;
+      setKpSheet(true);
+    });
     function setKpSheet(on) {
       const el = document.getElementById("kpSheet");
       el.classList.toggle("show", on);
@@ -795,6 +934,7 @@
     document.getElementById("btnKpHelp").onclick = () => setKpSheet(true);
     document.getElementById("btnKpClose").onclick = () => setKpSheet(false);
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") setKpSheet(false); });
+    if (isMobile()) document.getElementById("btnPlay").textContent = playLabel(false);
     document.getElementById("btnRefresh").onclick = () => { fetchQuakes(); fetchSpace(); };
     document.getElementById("btnPeru").onclick = () => map.flyTo({ center: [-75.2, -9.3], zoom: 4.6, speed: 0.85 });
     document.getElementById("btnGlobe").onclick = () => {
@@ -822,17 +962,17 @@
       paint(t);
     };
     document.getElementById("btnPlay").onclick = () => {
-      if (state.play) { state.play = false; clearInterval(playTimer); document.getElementById("btnPlay").textContent = "Reproducir"; return; }
+      if (state.play) { state.play = false; clearInterval(playTimer); document.getElementById("btnPlay").textContent = playLabel(false); return; }
       if (!state.range) return;
       state.play = true;
-      document.getElementById("btnPlay").textContent = "Pausar";
+      document.getElementById("btnPlay").textContent = playLabel(true);
       const scrub = document.getElementById("scrub");
       if (Number(scrub.value) >= 990) scrub.value = 0;
       playTimer = setInterval(() => {
         const v = Number(scrub.value) + 8;
         if (v >= 1000) {
           scrub.value = 1000; state.play = false; clearInterval(playTimer);
-          document.getElementById("btnPlay").textContent = "Reproducir";
+          document.getElementById("btnPlay").textContent = playLabel(false);
           document.getElementById("scrubClock").textContent = "semana completa";
           state.tMax = state.range[1]; paint(state.tMax); return;
         }
