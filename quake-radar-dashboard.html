@@ -211,7 +211,7 @@
     }
 
     .magbox {
-      top: calc(var(--safe-t) + 340px); left: var(--safe-l);
+      top: calc(var(--safe-t) + 378px); left: var(--safe-l);
       width: min(240px, calc(100vw - 24px)); padding: 10px 12px;
     }
     .magrow { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 6px 0; }
@@ -232,6 +232,44 @@
     .tag.mag5 { color: #ffc1cc; border-color: color-mix(in srgb, var(--crimson) 55%, transparent); }
     @media (max-width: 900px) {
       .magbox, .spark { display: none; }
+    }
+
+    .magrow .q {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 18px; height: 18px; margin-left: 6px; padding: 0;
+      font-size: .72rem; font-weight: 700; line-height: 1;
+      border-radius: 50%; vertical-align: middle;
+    }
+    .kphelp { margin-top: 8px; }
+    .kphelp summary {
+      cursor: pointer; list-style: none; font-size: .72rem;
+      letter-spacing: .08em; text-transform: uppercase; color: var(--cyan);
+    }
+    .kphelp summary::-webkit-details-marker { display: none; }
+    .kphelp summary::after { content: " ▾"; opacity: .7; }
+    .kphelp:not([open]) summary::after { content: " ▸"; }
+    .kp-scale { list-style: none; margin-top: 8px; }
+    .kp-scale li {
+      display: grid; grid-template-columns: 8px 2.6em 1fr; gap: 8px;
+      align-items: start; margin: 6px 0; font-size: .72rem; line-height: 1.35; color: var(--muted);
+    }
+    .kp-scale b { font-family: "IBM Plex Mono", monospace; color: var(--ink); font-weight: 600; }
+    .kp-scale i { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; display: block; }
+    .kp-scale i.k0 { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+    .kp-scale i.k3 { background: #7ec8ff; box-shadow: 0 0 8px #7ec8ff; }
+    .kp-scale i.k4 { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+    .kp-scale i.k5 { background: var(--crimson); box-shadow: 0 0 8px var(--crimson); }
+    .kp-sheet {
+      display: none; z-index: 6;
+      left: 50%; top: 50%; transform: translate(-50%, -50%);
+      width: min(420px, calc(100vw - 24px)); padding: 16px 16px 14px;
+    }
+    .kp-sheet.show { display: block; }
+    .kp-sheet h3 { font-family: Syne, sans-serif; font-size: 1rem; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 6px; }
+    .kp-sheet .x { float: right; padding: 4px 8px; font-size: .7rem; }
+    .top-actions #btnKp { display: none; }
+    @media (max-width: 900px) {
+      .top-actions #btnKp { display: inline-flex; }
     }
     @media (prefers-reduced-motion: reduce) {
       .mark::after, .live i { animation: none; }
@@ -256,6 +294,7 @@
       <button type="button" id="btnPeru">Perú</button>
       <button type="button" id="btnGlobe">Globo</button>
       <button type="button" id="btnAlerts">Alertas M≥6.5</button>
+      <button type="button" id="btnKp" title="Escala Kp">Kp</button>
       <button type="button" id="btnRefresh">Actualizar</button>
     </div>
   </header>
@@ -283,14 +322,34 @@
 
 
   <section class="hud magbox" aria-label="Campo magnético y coincidencias">
-    <div class="magrow"><span>Kp</span><b id="kpiKp">—</b></div>
+    <div class="magrow"><span>Kp <button type="button" class="q" id="btnKpHelp" aria-controls="kpSheet" title="Qué es Kp">?</button></span><b id="kpiKp">—</b></div>
     <div class="magrow"><span>Bz</span><b id="kpiBz">—</b></div>
     <div class="magrow"><span>Cruce</span><b id="kpiCoin">—</b></div>
+    <details class="kphelp" open>
+      <summary>¿Qué es Kp?</summary>
+      <ul class="kp-scale">
+        <li><i class="k0"></i><b>0–2</b> Calmo: el campo magnético está tranquilo.</li>
+        <li><i class="k3"></i><b>3</b> Inestable: fluctuaciones leves.</li>
+        <li><i class="k4"></i><b>4</b> Activo: perturbación moderada por viento solar. No es tormenta.</li>
+        <li><i class="k5"></i><b>5–9</b> Tormenta geomagnética, de menor (G1) a extrema (G5).</li>
+      </ul>
+    </details>
     <p class="caveat" id="kpiCoinNote">Campo planetario NOAA (viento solar), no un precursor local. Coincidencia ≠ pronóstico.</p>
     <div class="watch" id="watch"></div>
   </section>
+  <aside class="hud kp-sheet" id="kpSheet" role="dialog" aria-labelledby="kpSheetTitle" aria-hidden="true">
+    <button type="button" class="x" id="btnKpClose">cerrar</button>
+    <h3 id="kpSheetTitle">Escala Kp</h3>
+    <p class="caveat">Índice planetario NOAA del campo magnético de la Tierra. No es un precursor local ni un pronóstico de sismos.</p>
+    <ul class="kp-scale">
+      <li><i class="k0"></i><b>0–2</b> Calmo / Quiet: el campo magnético está tranquilo.</li>
+      <li><i class="k3"></i><b>3</b> Inestable / Unsettled: hay fluctuaciones leves.</li>
+      <li><i class="k4"></i><b>4</b> Activo / Active: perturbación moderada por ráfagas de viento solar un poco más fuertes de lo normal. No llega a ser una tormenta.</li>
+      <li><i class="k5"></i><b>5–9</b> Tormenta geomagnética: de menor (G1) a extrema (G5).</li>
+    </ul>
+  </aside>
   <div class="hud spark" aria-label="Kp de la semana">
-    <label>Kp 7 días · palos = sismos M≥5</label>
+    <label>Kp 7 días (0 calmo – 9 tormenta) · palos = sismos M≥5</label>
     <canvas id="kpSpark" width="696" height="88"></canvas>
   </div>
   <div class="hud legend">
@@ -726,6 +785,16 @@
       }
     }
 
+
+    function setKpSheet(on) {
+      const el = document.getElementById("kpSheet");
+      el.classList.toggle("show", on);
+      el.setAttribute("aria-hidden", on ? "false" : "true");
+    }
+    document.getElementById("btnKp").onclick = () => setKpSheet(!document.getElementById("kpSheet").classList.contains("show"));
+    document.getElementById("btnKpHelp").onclick = () => setKpSheet(true);
+    document.getElementById("btnKpClose").onclick = () => setKpSheet(false);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") setKpSheet(false); });
     document.getElementById("btnRefresh").onclick = () => { fetchQuakes(); fetchSpace(); };
     document.getElementById("btnPeru").onclick = () => map.flyTo({ center: [-75.2, -9.3], zoom: 4.6, speed: 0.85 });
     document.getElementById("btnGlobe").onclick = () => {
