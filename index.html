@@ -110,15 +110,27 @@
       box-shadow: 0 0 18px rgba(255,77,109,.4);
       background: color-mix(in srgb, var(--crimson) 16%, #12060a);
     }
-    .kpis {
+    .leftcol {
+      position: fixed; z-index: 3;
       top: calc(var(--safe-t) + 118px); left: var(--safe-l);
-      display: grid; grid-template-columns: 1fr; gap: 8px; padding: 10px;
-      width: min(240px, calc(100vw - 24px));
+      width: min(268px, calc(100vw - 24px));
+      display: flex; flex-direction: column; gap: 14px;
+      max-height: calc(100vh - var(--safe-t) - var(--safe-b) - 190px);
+      overflow-y: auto; overflow-x: hidden;
+      padding-right: 2px;
+      pointer-events: none;
+      scrollbar-width: thin;
     }
-    .kpi { padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, white 4%, transparent); }
+    .leftcol > * { pointer-events: auto; }
+    .kpis {
+      position: static; top: auto; left: auto;
+      display: grid; grid-template-columns: 1fr; gap: 12px; padding: 12px;
+      width: 100%;
+    }
+    .kpi { padding: 12px 14px; border-radius: 14px; background: color-mix(in srgb, white 4%, transparent); }
     .kpi span { display: block; font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
-    .kpi b { display: block; margin-top: 4px; font-family: "IBM Plex Mono", monospace; font-size: 1.25rem; font-weight: 600; }
-    .kpi small { color: var(--muted); font-size: .75rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .kpi b { display: block; margin-top: 6px; font-family: "IBM Plex Mono", monospace; font-size: 1.25rem; font-weight: 600; }
+    .kpi small { color: var(--muted); font-size: .75rem; display: block; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .feed {
       top: calc(var(--safe-t) + 118px); right: var(--safe-r);
       width: min(360px, calc(100vw - 24px));
@@ -170,7 +182,7 @@
       left: var(--safe-l); bottom: calc(var(--safe-b) + 86px);
       padding: 10px 12px; font-size: .75rem;
     }
-    .legend div { display: flex; align-items: center; gap: 8px; margin: 4px 0; color: var(--muted); }
+    .legend div { display: flex; align-items: center; gap: 8px; margin: 7px 0; color: var(--muted); }
     .dot { width: 9px; height: 9px; border-radius: 50%; }
     .timeline {
       left: 50%; transform: translateX(-50%);
@@ -202,14 +214,14 @@
     .maplibregl-ctrl-attrib { display: none !important; }
 
     .magbox {
-      top: calc(var(--safe-t) + 378px); left: var(--safe-l);
-      width: min(240px, calc(100vw - 24px)); padding: 10px 12px;
+      position: static; top: auto; left: auto;
+      width: 100%; padding: 14px 14px 12px;
     }
-    .magrow { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 6px 0; }
+    .magrow { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 10px 0; }
     .magrow span { font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
     .magrow b { font-family: "IBM Plex Mono", monospace; font-size: 1.05rem; }
-    .caveat { font-size: .68rem; color: var(--muted); line-height: 1.35; margin-top: 8px; }
-    .watch { margin-top: 8px; font-size: .75rem; color: var(--amber); }
+    .caveat { font-size: .68rem; color: var(--muted); line-height: 1.45; margin-top: 12px; }
+    .watch { margin-top: 12px; font-size: .75rem; color: var(--amber); line-height: 1.4; }
     .spark {
       left: 50%; transform: translateX(-50%);
       bottom: calc(var(--safe-b) + 56px);
@@ -228,18 +240,19 @@
       font-size: .72rem; font-weight: 700; line-height: 1;
       border-radius: 50%; vertical-align: middle;
     }
-    .kphelp { margin-top: 8px; }
+    .kphelp { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--stroke); }
     .kphelp summary {
       cursor: pointer; list-style: none; font-size: .72rem;
       letter-spacing: .08em; text-transform: uppercase; color: var(--cyan);
+      padding: 2px 0;
     }
     .kphelp summary::-webkit-details-marker { display: none; }
     .kphelp summary::after { content: " ▾"; opacity: .7; }
     .kphelp:not([open]) summary::after { content: " ▸"; }
-    .kp-scale { list-style: none; margin-top: 8px; }
+    .kp-scale { list-style: none; margin-top: 10px; }
     .kp-scale li {
-      display: grid; grid-template-columns: 8px 2.6em 1fr; gap: 8px;
-      align-items: start; margin: 6px 0; font-size: .72rem; line-height: 1.35; color: var(--muted);
+      display: grid; grid-template-columns: 8px 2.8em 1fr; gap: 10px;
+      align-items: start; margin: 10px 0; font-size: .72rem; line-height: 1.45; color: var(--muted);
     }
     .kp-scale b { font-family: "IBM Plex Mono", monospace; color: var(--ink); font-weight: 600; }
     .kp-scale i { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; display: block; }
@@ -286,11 +299,13 @@
       .narrow { display: inline; }
       .live { padding: 7px 8px; font-size: 0; gap: 0; }
       button { padding: 8px 11px; font-size: .78rem; white-space: nowrap; flex-shrink: 0; }
+      .leftcol { display: contents; }
       .kpis { display: none; }
       .legend, .spark, .watermark { display: none !important; }
       .maplibregl-ctrl-bottom-left { display: none !important; }
 
       .magbox {
+        position: fixed;
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
         align-items: center;
@@ -299,8 +314,9 @@
         right: var(--safe-r);
         width: auto;
         bottom: calc(var(--safe-b) + 50px + var(--feed-peek, 92px));
-        padding: 6px 10px;
+        padding: 8px 12px;
         border-radius: 14px;
+        z-index: 3;
       }
       .magbox .kphelp, .magbox .caveat, .magbox .watch { display: none; }
       .magrow { margin: 0; }
@@ -419,6 +435,7 @@
     </div>
   </header>
 
+  <div class="leftcol">
   <section class="hud kpis" aria-label="Indicadores">
     <div class="kpi"><span>Eventos</span><b id="kpiCount">—</b><small id="kpiWindow">ventana 7 días</small></div>
     <div class="kpi"><span>Máximo</span><b id="kpiMax">—</b><small id="kpiMaxPlace">esperando feed</small></div>
@@ -446,7 +463,7 @@
     <div class="magrow"><span>Kp <button type="button" class="q" id="btnKpHelp" aria-controls="kpSheet" title="Qué es Kp">?</button></span><b id="kpiKp">—</b></div>
     <div class="magrow"><span>Bz</span><b id="kpiBz">—</b></div>
     <div class="magrow"><span>Cruce</span><b id="kpiCoin">—</b></div>
-    <details class="kphelp" open>
+    <details class="kphelp">
       <summary>¿Qué es Kp?</summary>
       <ul class="kp-scale">
         <li><i class="k0"></i><b>0–2</b> Calmo: el campo magnético está tranquilo.</li>
@@ -458,6 +475,7 @@
     <p class="caveat" id="kpiCoinNote">Campo planetario NOAA (viento solar), no un precursor local. Coincidencia ≠ pronóstico.</p>
     <div class="watch" id="watch"></div>
   </section>
+  </div>
   <aside class="hud kp-sheet" id="kpSheet" role="dialog" aria-labelledby="kpSheetTitle" aria-hidden="true">
     <button type="button" class="x" id="btnKpClose">cerrar</button>
     <h3 id="kpSheetTitle">Escala Kp</h3>
