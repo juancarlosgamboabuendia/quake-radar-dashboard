@@ -561,18 +561,25 @@
     });
 
 
+    function esc(v) {
+      return String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    }
     function utcMs(tag) {
       if (!tag) return NaN;
-      return Date.parse(/Z$/.test(tag) ? tag : tag + "Z");
+      // NOAA usa "YYYY-MM-DD HH:MM:SS(.mmm)"; Safari no parsea el espacio.
+      const iso = String(tag).trim().replace(" ", "T");
+      return Date.parse(/(Z|[+-]\d\d:?\d\d)$/.test(iso) ? iso : iso + "Z");
     }
+    // Kp planetario viene en bloques de 3 h: time_tag marca el inicio del bloque.
     function kpAt(t) {
-      if (!state.kp.length) return null;
-      let best = state.kp[0], d = Math.abs(t - best.t);
-      for (const k of state.kp) {
-        const dd = Math.abs(t - k.t);
-        if (dd < d) { best = k; d = dd; }
+      const kp = state.kp;
+      if (!kp.length || t < kp[0].t) return null;
+      let lo = 0, hi = kp.length - 1;
+      while (lo < hi) {
+        const mid = (lo + hi + 1) >> 1;
+        if (kp[mid].t <= t) lo = mid; else hi = mid - 1;
       }
-      return d <= 4 * 3600000 ? best.kp : null;
+      return t - kp[lo].t < 3 * 3600000 ? kp[lo].kp : null;
     }
     function kpTag(kp) {
       if (kp == null) return "";
@@ -598,8 +605,13 @@
     function drawSpark() {
       const c = document.getElementById("kpSpark");
       if (!c || !state.kp.length) return;
+      const dpr = window.devicePixelRatio || 1;
+      const w = c.clientWidth || c.width / dpr, h = c.clientHeight || c.height / dpr;
+      if (c.width !== Math.round(w * dpr) || c.height !== Math.round(h * dpr)) {
+        c.width = Math.round(w * dpr); c.height = Math.round(h * dpr);
+      }
       const ctx = c.getContext("2d");
-      const w = c.width, h = c.height;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, w, h);
       const t0 = state.range ? state.range[0] : state.kp[0].t;
       const t1 = state.range ? state.range[1] : state.kp[state.kp.length - 1].t;
@@ -646,6 +658,7 @@
       const c = coincidence(filtered(state.tMax));
       if (!c) {
         coinEl.textContent = "—";
+        note.textContent = "Campo planetario NOAA (viento solar), no un precursor local. Coincidencia ≠ pronóstico.";
       } else if (c.stormFrac < 0.02) {
         coinEl.textContent = "nula";
         note.textContent = "Semana sin Kp≥4. No hay tormenta con la que cruzar sismos. Campo planetario NOAA, no precursor local.";
@@ -665,8 +678,13 @@
           fetch(KP_URL), fetch(KP_NOW), fetch(MAG_NOW)
         ]);
         if (kpRes.status === "fulfilled" && kpRes.value.ok) {
-          const raw = await kpRes.value.json();
-          state.kp = (Array.isArray(raw) ? raw : []).map((d) => ({
+          let raw = await kpRes.value.json();
+          raw = Array.isArray(raw) ? raw : [];
+          if (Array.isArray(raw[0])) {
+            const [head, ...rows] = raw;
+            raw = rows.map((r) => Object.fromEntries(head.map((h, i) => [h, r[i]])));
+          }
+          state.kp = raw.map((d) => ({
             t: utcMs(d.time_tag),
             kp: Number(d.Kp ?? d.kp_index ?? d.estimated_kp)
           })).filter((d) => !isNaN(d.t) && !isNaN(d.kp)).sort((a, b) => a.t - b.t);
@@ -740,6 +758,7 @@
 
       map.on("load", () => {
         try { map.setProjection({ type: "globe" }); state.globe = true; } catch (e) { state.globe = false; }
+        document.getElementById("btnGlobe").classList.toggle("active", state.globe);
         try {
           map.setSky({
             "sky-color": "#05070c",
@@ -815,7 +834,9 @@
       document.getElementById("kpiCount").textContent = String(list.length);
       if (!list.length) {
         document.getElementById("kpiMax").textContent = "—";
+        document.getElementById("kpiMaxPlace").textContent = "";
         document.getElementById("kpiLast").textContent = "—";
+        document.getElementById("kpiLastPlace").textContent = "";
         return;
       }
       const max = list.reduce((a, b) => a.properties.mag > b.properties.mag ? a : b);
@@ -842,14 +863,14 @@
         btn.innerHTML = `
           <div class="row">
             <span class="mag ${magClass(p.mag)}">M ${p.mag.toFixed(1)}</span>
-            <span class="place">${p.place || "ubicación desconocida"}</span>
+            <span class="place">${esc(p.place || "ubicación desconocida")}</span>
           </div>
           <div class="meta">
             <span class="tag">${relTime(p.time)}</span>
             <span class="tag">${fmt.format(p.time)} Lima</span>
             <span class="tag">${depth.toFixed(0)} km</span>
             ${p.tsunami ? '<span class="tag hot">tsunami watch</span>' : ""}
-            ${p.alert ? `<span class="tag hot">PAGER ${p.alert}</span>` : ""}
+            ${p.alert ? `<span class="tag hot">PAGER ${esc(p.alert)}</span>` : ""}
             ${p.mag >= 7 ? '<span class="tag hot">muy fuerte</span>' : ""}
             ${kpTag(kpAt(p.time))}
           </div>`;
@@ -863,28 +884,38 @@
       const [lng, lat, depth] = f.geometry.coordinates;
       state.selected = p.code;
       paint(state.tMax);
-      const html = `<strong>M ${p.mag.toFixed(1)}</strong><br>${p.place}<br>${fmt.format(p.time)} Lima · ${depth.toFixed(0)} km`;
+      const html = `<strong>M ${p.mag.toFixed(1)}</strong><br>${esc(p.place || "ubicación desconocida")}<br>${fmt.format(p.time)} Lima · ${depth.toFixed(0)} km`;
       popup.setLngLat([lng, lat]).setHTML(html).addTo(map);
       const box = document.getElementById("detail");
       document.getElementById("detailBody").innerHTML = `
         <h3 class="${magClass(p.mag)}">M ${p.mag.toFixed(1)}</h3>
-        <p>${p.place || ""}</p>
+        <p>${esc(p.place)}</p>
         <p>${fmt.format(p.time)} (Lima) · ${relTime(p.time)}<br>Profundidad ${depth.toFixed(1)} km
           ${p.tsunami ? " · posible tsunami" : ""}
-          ${p.alert ? " · alerta PAGER " + p.alert : ""}</p>
+          ${p.alert ? " · alerta PAGER " + esc(p.alert) : ""}</p>
         <p>Campo en esa hora: ${(() => { const k = kpAt(p.time); return k == null ? "Kp no disponible" : "Kp " + k.toFixed(1) + (k >= 5 ? " · tormenta geomagnética" : k >= 4 ? " · activo" : " · quieto"); })()}</p>
-        ${p.url ? `<a href="${p.url}" target="_blank" rel="noopener">Ficha USGS</a>` : ""}
+        ${/^https:\/\//.test(p.url || "") ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">Ficha USGS</a>` : ""}
       `;
       box.classList.add("show");
       const lg = document.querySelector(".legend"); if (lg) lg.style.visibility = "hidden";
       if (fly) map.flyTo({ center: [lng, lat], zoom: Math.min(4.0, Math.max(map.getZoom(), 3.4)), speed: 0.9, curve: 1.4 });
     }
 
+    // Un solo AudioContext, creado en el clic de "Alertas" (gesto del usuario) para que el navegador lo deje sonar.
+    let audioCtx = null;
+    function ensureAudio() {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      if (!audioCtx) audioCtx = new AC();
+      if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+      return audioCtx;
+    }
     function maybeAlert(list) {
       if (!state.alerts) return;
       const fresh = list.filter((f) => f.properties.mag >= 6.5 && !state.seen.has(f.id) && Date.now() - f.properties.time < 15 * 60 * 1000);
       if (!fresh.length) return;
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const ctx = ensureAudio();
+      if (!ctx) return;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = "sine";
@@ -920,7 +951,8 @@
         }
         paint(state.tMax);
       } catch (err) {
-        listEl.innerHTML = '<div class="msg err">No pude leer el feed USGS. Revisa la conexión e intenta actualizar.</div>';
+        // Si ya hay datos, se mantienen; solo se avisa cuando no hay nada que mostrar.
+        if (!state.all.length) listEl.innerHTML = '<div class="msg err">No pude leer el feed USGS. Revisa la conexión e intenta actualizar.</div>';
       }
     }
 
@@ -951,9 +983,13 @@
     document.getElementById("btnKp").onclick = () => setKpSheet(!document.getElementById("kpSheet").classList.contains("show"));
     document.getElementById("btnKpHelp").onclick = () => setKpSheet(true);
     document.getElementById("btnKpClose").onclick = () => setKpSheet(false);
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") setKpSheet(false); });
+    function closeDetail() {
+      document.getElementById("detail").classList.remove("show");
+      const lg = document.querySelector(".legend"); if (lg) lg.style.visibility = "";
+    }
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") { setKpSheet(false); closeDetail(); } });
     if (isMobile()) document.getElementById("btnPlay").textContent = playLabel(false);
-    document.getElementById("btnRefresh").onclick = () => { fetchQuakes(); fetchSpace(); };
+    document.getElementById("btnRefresh").onclick = refreshAll;
     document.getElementById("btnPeru").onclick = () => map.flyTo({ center: [-75.2, -9.3], zoom: 4.6, speed: 0.85 });
     document.getElementById("btnGlobe").onclick = () => {
       state.globe = !state.globe;
@@ -962,9 +998,10 @@
     };
     document.getElementById("btnAlerts").onclick = (e) => {
       state.alerts = !state.alerts;
+      if (state.alerts) ensureAudio();
       e.currentTarget.classList.toggle("active", state.alerts);
     };
-    document.getElementById("btnClose").onclick = () => { document.getElementById("detail").classList.remove("show"); const lg = document.querySelector(".legend"); if (lg) lg.style.visibility = ""; };
+    document.getElementById("btnClose").onclick = closeDetail;
     document.getElementById("search").oninput = (e) => { state.query = e.target.value; paint(state.tMax); };
     document.querySelectorAll(".chip").forEach((c) => c.onclick = () => {
       document.querySelectorAll(".chip").forEach((x) => x.classList.remove("on"));
@@ -999,10 +1036,19 @@
       }, 40);
     };
     document.addEventListener("keydown", (e) => {
-      if (e.key === "r" && !e.metaKey && document.activeElement.tagName !== "INPUT") fetchQuakes();
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+      if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === "r") { fetchQuakes(); fetchSpace(); }
       if (e.key === "/") { e.preventDefault(); document.getElementById("search").focus(); }
     });
-    setInterval(() => { fetchQuakes(); fetchSpace(); }, 5 * 60 * 1000);
+    window.addEventListener("resize", drawSpark);
+    // Refresca cada 5 min; si la pestaña estuvo oculta, refresca al volver.
+    let lastRefresh = Date.now();
+    function refreshAll() { lastRefresh = Date.now(); fetchQuakes(); fetchSpace(); }
+    setInterval(() => { if (!document.hidden) refreshAll(); }, 5 * 60 * 1000);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && map && Date.now() - lastRefresh > 5 * 60 * 1000) refreshAll();
+    });
   </script>
 </body>
 </html>
