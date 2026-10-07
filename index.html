@@ -115,7 +115,7 @@
       top: calc(var(--safe-t) + 118px); left: var(--safe-l);
       width: min(268px, calc(100vw - 24px));
       display: flex; flex-direction: column; gap: 14px;
-      max-height: calc(100vh - var(--safe-t) - var(--safe-b) - 190px);
+      max-height: calc(100vh - var(--safe-t) - var(--safe-b) - 230px);
       overflow-y: auto; overflow-x: hidden;
       padding-right: 2px;
       pointer-events: none;
@@ -168,7 +168,7 @@
     .item .row { display: flex; flex-direction: column; gap: 4px; }
     .item .row .place { color: var(--ink); }
     .mag { font-family: "IBM Plex Mono", monospace; font-weight: 600; font-size: 1.05rem; }
-    .m5 { color: var(--cyan); } .m6 { color: var(--amber); } .m7 { color: var(--crimson); }
+    .m4 { color: var(--ok); } .m5 { color: var(--cyan); } .m6 { color: var(--amber); } .m7 { color: var(--crimson); }
     .place { font-size: .86rem; line-height: 1.3; }
     .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
     .tag {
@@ -178,10 +178,7 @@
     .tag.hot { color: #ffc1cc; border-color: color-mix(in srgb, var(--crimson) 55%, transparent); }
     .msg { color: var(--muted); font-size: .82rem; padding: 16px; }
     .err { color: #ffb4b4; }
-    .legend {
-      left: var(--safe-l); bottom: calc(var(--safe-b) + 86px);
-      padding: 10px 12px; font-size: .75rem;
-    }
+    .legend { position: static; padding: 10px 12px; font-size: .75rem; }
     .legend div { display: flex; align-items: center; gap: 8px; margin: 7px 0; color: var(--muted); }
     .dot { width: 9px; height: 9px; border-radius: 50%; }
     .timeline {
@@ -192,7 +189,7 @@
     .timeline input[type=range] { width: 100%; accent-color: var(--cyan); }
     .clock { font-family: "IBM Plex Mono", monospace; font-size: .75rem; color: var(--muted); white-space: nowrap; }
     .detail {
-      left: calc(var(--safe-l) + 256px); bottom: calc(var(--safe-b) + 86px);
+      left: calc(var(--safe-l) + 280px); bottom: calc(var(--safe-b) + 140px);
       width: min(320px, calc(100vw - 680px)); padding: 14px; display: none;
       z-index: 4;
     }
@@ -220,6 +217,8 @@
     .magrow { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 10px 0; }
     .magrow span { font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
     .magrow b { font-family: "IBM Plex Mono", monospace; font-size: 1.05rem; }
+    .kpstate { display: block; margin: -4px 0 6px; font-size: .68rem; color: var(--muted); line-height: 1.4; }
+    .kp3 { color: #7ec8ff; }
     .caveat { font-size: .68rem; color: var(--muted); line-height: 1.45; margin-top: 12px; }
     .watch { margin-top: 12px; font-size: .75rem; color: var(--amber); line-height: 1.4; }
     .spark {
@@ -318,7 +317,7 @@
         border-radius: 14px;
         z-index: 3;
       }
-      .magbox .kphelp, .magbox .caveat, .magbox .watch { display: none; }
+      .magbox .kphelp, .magbox .caveat, .magbox .watch, .magbox .kpstate { display: none; }
       .magrow { margin: 0; }
       .magrow span { font-size: .62rem; letter-spacing: .1em; }
       .magrow b { font-size: .95rem; }
@@ -421,7 +420,7 @@
       <div class="mark" aria-hidden="true"></div>
       <div>
         <h1>Radar Sísmico Global</h1>
-        <p>Eventos significativos M ≥ 5.0 · últimos 7 días</p>
+        <p>Sismos M ≥ 4.0 · últimos 7 días</p>
         <div class="by">Creado por Juan Carlos Gamboa Buendía</div>
       </div>
     </div>
@@ -450,7 +449,8 @@
         <input id="search" type="search" placeholder="Buscar lugar…" autocomplete="off" />
       </div>
       <div class="chips" role="tablist">
-        <button class="chip on" data-min="5" type="button">M ≥ 5</button>
+        <button class="chip on" data-min="4" type="button">M ≥ 4</button>
+        <button class="chip" data-min="5" type="button">M ≥ 5</button>
         <button class="chip" data-min="6" type="button">M ≥ 6</button>
         <button class="chip" data-min="7" type="button">M ≥ 7</button>
       </div>
@@ -461,6 +461,7 @@
 
   <section class="hud magbox" aria-label="Campo magnético y coincidencias">
     <div class="magrow"><span>Kp <button type="button" class="q" id="btnKpHelp" aria-controls="kpSheet" title="Qué es Kp">?</button></span><b id="kpiKp">—</b></div>
+    <small class="kpstate" id="kpiKpState"></small>
     <div class="magrow"><span>Bz</span><b id="kpiBz">—</b></div>
     <div class="magrow"><span>Cruce</span><b id="kpiCoin">—</b></div>
     <details class="kphelp">
@@ -475,11 +476,18 @@
     <p class="caveat" id="kpiCoinNote">Campo planetario NOAA (viento solar), no un precursor local. Coincidencia ≠ pronóstico.</p>
     <div class="watch" id="watch"></div>
   </section>
+  <div class="hud legend">
+    <div><span class="dot" style="background:#ff4d6d;box-shadow:0 0 10px #ff4d6d"></span>M ≥ 7.0 muy fuerte</div>
+    <div><span class="dot" style="background:#ffc53d;box-shadow:0 0 10px #ffc53d"></span>6.0 – 6.9 fuerte</div>
+    <div><span class="dot" style="background:#3ee0ff;box-shadow:0 0 10px #3ee0ff"></span>5.0 – 5.9 moderado</div>
+    <div><span class="dot" style="background:#3ee6a6;box-shadow:0 0 10px #3ee6a6"></span>4.0 – 4.9 leve</div>
+  </div>
   </div>
   <aside class="hud kp-sheet" id="kpSheet" role="dialog" aria-labelledby="kpSheetTitle" aria-hidden="true">
     <button type="button" class="x" id="btnKpClose">cerrar</button>
     <h3 id="kpSheetTitle">Escala Kp</h3>
     <p class="caveat">Índice planetario NOAA del campo magnético de la Tierra. No es un precursor local ni un pronóstico de sismos.</p>
+    <p class="caveat">Se lee en tercios: 4- = 3.67, 4o = 4.00, 4+ = 4.33. Como NOAA, el nivel usa el entero más cercano (4- ya cuenta como activo). ↑/↓ = tendencia de la última hora. Los bloques de 3 h más recientes son provisionales (línea punteada) hasta que NOAA publique el valor definitivo.</p>
     <ul class="kp-scale">
       <li><i class="k0"></i><b>0–2</b> Calmo / Quiet: el campo magnético está tranquilo.</li>
       <li><i class="k3"></i><b>3</b> Inestable / Unsettled: hay fluctuaciones leves.</li>
@@ -488,13 +496,8 @@
     </ul>
   </aside>
   <div class="hud spark" aria-label="Kp de la semana">
-    <label>Kp 7 días (0 calmo – 9 tormenta) · palos = sismos M≥5</label>
+    <label>Kp 7 días (0 calmo – 9 tormenta) · palos = sismos del filtro · líneas = Kp 4 y 5</label>
     <canvas id="kpSpark" width="696" height="88"></canvas>
-  </div>
-  <div class="hud legend">
-    <div><span class="dot" style="background:#ff4d6d;box-shadow:0 0 10px #ff4d6d"></span>M ≥ 7.0 muy fuerte</div>
-    <div><span class="dot" style="background:#ffc53d;box-shadow:0 0 10px #ffc53d"></span>6.0 – 6.9 fuerte</div>
-    <div><span class="dot" style="background:#3ee0ff;box-shadow:0 0 10px #3ee0ff"></span>5.0 – 5.9 moderado</div>
   </div>
 
   <div class="hud detail" id="detail">
@@ -511,7 +514,9 @@
 
   <script src="https://unpkg.com/maplibre-gl@5.6.1/dist/maplibre-gl.js"></script>
   <script>
-    const FEED = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.geojson";
+    // El feed 4.5_week no trae M 4.0–4.4; 2.5_week sí, y se filtra a M ≥ 4.
+    const FEED = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.geojson";
+    const MIN_MAG = 4;
 
     const KP_URL = "https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json";
     const KP_NOW = "https://services.swpc.noaa.gov/json/planetary_k_index_1m.json";
@@ -540,7 +545,7 @@
 
     const state = {
       all: [],
-      minMag: 5,
+      minMag: 4,
       query: "",
       selected: null,
       globe: true,
@@ -550,6 +555,9 @@
       tMax: 1,
       kp: [],
       kpNow: null,
+      kpNowT: null,
+      kpTrend: 0,
+      kpProvisional: false,
       bz: null,
       bt: null
     };
@@ -581,22 +589,56 @@
       }
       return t - kp[lo].t < 3 * 3600000 ? kp[lo].kp : null;
     }
+    const KP_BLOCK = 3 * 3600000;
+    // Kp se publica en tercios (2-, 2o, 2+ = 1.67, 2.00, 2.33). NOAA usa el entero redondeado
+    // para sus niveles: 3.67 ("4-") ya es Kp 4 activo y 4.67 ("5-") ya es G1.
+    function kpLevel(kp) { return Math.round(kp); }
+    function kpText(kp) {
+      const thirds = Math.round(kp * 3);
+      const n = Math.round(thirds / 3), r = thirds - n * 3;
+      return n + (r > 0 ? "+" : r < 0 ? "-" : "o");
+    }
+    function kpInfo(kp) {
+      const L = kpLevel(kp);
+      if (L >= 5) return { L, name: "tormenta G" + Math.min(5, L - 4), cls: "m7" };
+      if (L === 4) return { L, name: "activo", cls: "m6" };
+      if (L === 3) return { L, name: "inestable", cls: "kp3" };
+      return { L, name: "calmo", cls: "m4" };
+    }
     function kpTag(kp) {
       if (kp == null) return "";
-      if (kp >= 5) return `<span class="tag mag5">tormenta Kp ${kp.toFixed(1)}</span>`;
-      if (kp >= 4) return `<span class="tag mag4">Kp ${kp.toFixed(1)} activo</span>`;
-      return `<span class="tag">Kp ${kp.toFixed(1)}</span>`;
+      const i = kpInfo(kp);
+      const cls = i.L >= 5 ? "tag mag5" : i.L === 4 ? "tag mag4" : "tag";
+      return `<span class="${cls}">Kp ${kpText(kp)} ${i.name}</span>`;
+    }
+    // P(X ≥ k) con X ~ Binomial(n, p): probabilidad de ver tantos aciertos por puro azar.
+    function binomTail(k, n, p) {
+      if (k <= 0) return 1;
+      if (p <= 0) return 0;
+      if (p >= 1) return 1;
+      const lp = Math.log(p), lq = Math.log1p(-p);
+      let logC = 0, sum = 0;
+      for (let i = 0; i <= n; i++) {
+        if (i > 0) logC += Math.log((n - i + 1) / i);
+        if (i >= k) sum += Math.exp(logC + i * lp + (n - i) * lq);
+      }
+      return Math.min(1, sum);
     }
     function coincidence(list) {
       if (!state.kp.length || !list.length) return null;
-      const stormFrac = state.kp.filter((k) => k.kp >= 4).length / state.kp.length;
-      const hit = list.filter((f) => {
-        const k = kpAt(f.properties.time);
-        return k != null && k >= 4;
-      }).length;
-      const obs = hit / list.length;
+      // La fracción "azar" se mide solo sobre los bloques que cubren la misma ventana que los sismos.
+      const tEnd = state.tMax, tStart = state.range ? state.range[0] : state.kp[0].t;
+      const win = state.kp.filter((k) => k.t + KP_BLOCK > tStart && k.t <= tEnd);
+      if (!win.length) return null;
+      const stormFrac = win.filter((k) => kpLevel(k.kp) >= 4).length / win.length;
+      // Sismos sin Kp conocido (fuera de la serie) no cuentan ni a favor ni en contra.
+      const known = list.map((f) => kpAt(f.properties.time)).filter((k) => k != null);
+      if (!known.length) return null;
+      const n = known.length;
+      const hit = known.filter((k) => kpLevel(k) >= 4).length;
+      const obs = hit / n;
       const ratio = stormFrac > 0.001 ? obs / stormFrac : (hit ? Infinity : 0);
-      return { hit, n: list.length, obs, stormFrac, ratio };
+      return { hit, n, obs, stormFrac, ratio, p: binomTail(hit, n, stormFrac) };
     }
     function aftershockWatch(list) {
       const cut = Date.now() - 72 * 3600000;
@@ -617,26 +659,50 @@
       const t1 = state.range ? state.range[1] : state.kp[state.kp.length - 1].t;
       const span = Math.max(1, t1 - t0);
       const xOf = (t) => 8 + (w - 16) * ((t - t0) / span);
-      ctx.strokeStyle = "rgba(255,197,61,.85)";
-      ctx.fillStyle = "rgba(255,197,61,.18)";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      state.kp.forEach((k, i) => {
-        const x = xOf(k.t);
-        const y = h - 6 - (k.kp / 9) * (h - 14);
-        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      const yOf = (kp) => h - 6 - (kp / 9) * (h - 14);
+      // Umbrales: Kp 4 (activo) y Kp 5 (tormenta G1).
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 4]);
+      [[4, "rgba(255,197,61,.35)"], [5, "rgba(255,77,109,.4)"]].forEach(([v, col]) => {
+        ctx.strokeStyle = col;
+        ctx.beginPath(); ctx.moveTo(8, yOf(v - 0.5)); ctx.lineTo(w - 8, yOf(v - 0.5)); ctx.stroke();
       });
-      ctx.stroke();
-      ctx.lineTo(xOf(state.kp[state.kp.length - 1].t), h - 6);
-      ctx.lineTo(xOf(state.kp[0].t), h - 6);
+      ctx.setLineDash([]);
+      // Kp es un valor por bloque de 3 h: se dibuja en escalones, no como línea interpolada.
+      const kp = state.kp;
+      const firstProv = kp.findIndex((k) => k.provisional);
+      const lastFinal = firstProv === -1 ? kp.length - 1 : firstProv - 1;
+      ctx.fillStyle = "rgba(255,197,61,.18)";
+      ctx.beginPath();
+      ctx.moveTo(xOf(kp[0].t), h - 6);
+      kp.forEach((k) => { ctx.lineTo(xOf(k.t), yOf(k.kp)); ctx.lineTo(xOf(k.t + KP_BLOCK), yOf(k.kp)); });
+      ctx.lineTo(xOf(kp[kp.length - 1].t + KP_BLOCK), h - 6);
       ctx.closePath();
       ctx.fill();
+      const steps = (from, to) => {
+        ctx.beginPath();
+        for (let i = from; i <= to; i++) {
+          const k = kp[i];
+          if (i === from) ctx.moveTo(xOf(k.t), yOf(k.kp)); else ctx.lineTo(xOf(k.t), yOf(k.kp));
+          ctx.lineTo(xOf(k.t + KP_BLOCK), yOf(k.kp));
+        }
+        ctx.stroke();
+      };
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(255,197,61,.85)";
+      if (lastFinal >= 0) steps(0, lastFinal);
+      if (firstProv !== -1) {
+        ctx.setLineDash([4, 3]);
+        ctx.strokeStyle = "rgba(255,197,61,.6)";
+        steps(Math.max(0, firstProv - 1), kp.length - 1);
+        ctx.setLineDash([]);
+      }
       ctx.strokeStyle = "rgba(62,224,255,.55)";
       ctx.lineWidth = 1;
       filtered(state.tMax).forEach((f) => {
         const x = xOf(f.properties.time);
         const m = f.properties.mag;
-        ctx.strokeStyle = m >= 7 ? "#ff4d6d" : m >= 6 ? "#ffc53d" : "rgba(62,224,255,.7)";
+        ctx.strokeStyle = m >= 7 ? "#ff4d6d" : m >= 6 ? "#ffc53d" : m >= 5 ? "rgba(62,224,255,.7)" : "rgba(62,230,166,.35)";
         ctx.beginPath();
         ctx.moveTo(x, 4);
         ctx.lineTo(x, h - 6);
@@ -649,8 +715,22 @@
       const coinEl = document.getElementById("kpiCoin");
       const note = document.getElementById("kpiCoinNote");
       const watch = document.getElementById("watch");
-      if (state.kpNow != null) kpEl.textContent = state.kpNow.toFixed(1);
-      else if (state.kp.length) kpEl.textContent = state.kp[state.kp.length - 1].kp.toFixed(1);
+      const stateEl = document.getElementById("kpiKpState");
+      const lastKp = state.kp.length ? state.kp[state.kp.length - 1].kp : null;
+      const kpShown = state.kpNow != null ? state.kpNow : lastKp;
+      if (kpShown != null) {
+        const i = kpInfo(kpShown);
+        kpEl.textContent = kpText(kpShown) + (state.kpTrend > 0 ? " ↑" : state.kpTrend < 0 ? " ↓" : "");
+        kpEl.className = i.cls;
+        const dayAgo = Date.now() - 24 * 3600000;
+        const day = state.kp.filter((k) => k.t + KP_BLOCK > dayAgo);
+        const max24 = day.length ? Math.max(...day.map((k) => k.kp)) : null;
+        stateEl.textContent = i.name[0].toUpperCase() + i.name.slice(1)
+          + (state.kpTrend > 0 ? " · subiendo" : state.kpTrend < 0 ? " · bajando" : "")
+          + (max24 != null ? " · máx 24 h " + kpText(max24) + (kpLevel(max24) >= 5 ? " (G" + Math.min(5, kpLevel(max24) - 4) + ")" : "") : "")
+          + (state.kpNow != null ? " · estimado en vivo" : " · último bloque 3 h");
+        kpEl.title = "Kp " + kpShown.toFixed(2) + " · " + i.name;
+      }
       if (state.bz != null) {
         bzEl.textContent = (state.bz >= 0 ? "+" : "") + state.bz.toFixed(1);
         bzEl.className = state.bz < -5 ? "m7" : state.bz < 0 ? "m6" : "m5";
@@ -661,10 +741,12 @@
         note.textContent = "Campo planetario NOAA (viento solar), no un precursor local. Coincidencia ≠ pronóstico.";
       } else if (c.stormFrac < 0.02) {
         coinEl.textContent = "nula";
-        note.textContent = "Semana sin Kp≥4. No hay tormenta con la que cruzar sismos. Campo planetario NOAA, no precursor local.";
+        note.textContent = "Periodo sin Kp≥4. No hay tormenta con la que cruzar sismos. Campo planetario NOAA, no precursor local.";
       } else {
         coinEl.textContent = (c.ratio >= 10 ? "×∞" : "×" + c.ratio.toFixed(1));
-        note.textContent = c.hit + " de " + c.n + " sismos en ventanas Kp≥4 (" + Math.round(c.obs * 100) + "%). Esas ventanas fueron el " + Math.round(c.stormFrac * 100) + "% de la semana. ×1 = azar. No es pronóstico.";
+        const pTxt = c.p < 0.001 ? "p < 0.001" : "p = " + c.p.toFixed(c.p < 0.01 ? 3 : 2);
+        const verdict = c.ratio <= 1 || c.p >= 0.05 ? "compatible con azar" : "por encima del azar, pero no implica causa";
+        note.textContent = c.hit + " de " + c.n + " sismos en ventanas Kp≥4 (" + Math.round(c.obs * 100) + "%). Esas ventanas fueron el " + Math.round(c.stormFrac * 100) + "% del periodo. ×1 = azar; " + pTxt + ": " + verdict + ". No es pronóstico.";
       }
       const mains = aftershockWatch(state.all);
       watch.textContent = mains.length
@@ -691,8 +773,31 @@
         }
         if (nowRes.status === "fulfilled" && nowRes.value.ok) {
           const raw = await nowRes.value.json();
-          const last = Array.isArray(raw) && raw.length ? raw[raw.length - 1] : null;
-          if (last) state.kpNow = Number(last.estimated_kp ?? last.kp_index);
+          const est = (Array.isArray(raw) ? raw : []).map((d) => ({
+            t: utcMs(d.time_tag),
+            kp: Number(d.estimated_kp ?? d.kp_index)
+          })).filter((d) => !isNaN(d.t) && !isNaN(d.kp)).sort((a, b) => a.t - b.t);
+          if (est.length) {
+            const last = est[est.length - 1];
+            state.kpNow = last.kp; state.kpNowT = last.t;
+            // Tendencia: media de los últimos 15 min vs. la de hace ~1 h (suaviza el ruido minuto a minuto).
+            const mean = (a) => a.reduce((s, d) => s + d.kp, 0) / a.length;
+            const recent = est.filter((d) => d.t > last.t - 15 * 60000);
+            const before = est.filter((d) => d.t > last.t - 75 * 60000 && d.t <= last.t - 60 * 60000);
+            const diff = before.length ? mean(recent) - mean(before) : 0;
+            state.kpTrend = diff >= 0.33 ? 1 : diff <= -0.33 ? -1 : 0;
+            // El Kp oficial de 3 h llega con retraso: los bloques que faltan se completan con el
+            // máximo del Kp estimado minuto a minuto dentro de cada bloque (marcados como provisionales).
+            const lastFinal = state.kp.length ? state.kp[state.kp.length - 1].t : -Infinity;
+            const blocks = new Map();
+            est.forEach((d) => {
+              const b = Math.floor(d.t / KP_BLOCK) * KP_BLOCK;
+              if (b > lastFinal) blocks.set(b, Math.max(blocks.get(b) ?? 0, d.kp));
+            });
+            state.kp = state.kp.filter((k) => !k.provisional)
+              .concat([...blocks].map(([t, kp]) => ({ t, kp, provisional: true })))
+              .sort((a, b) => a.t - b.t);
+          }
         }
         if (magRes.status === "fulfilled" && magRes.value.ok) {
           const raw = await magRes.value.json();
@@ -703,9 +808,11 @@
           }
         }
       } catch (e) {}
-      renderSpace();
+      // Si los sismos ya están pintados, se repinta la lista para que muestre el Kp de cada evento.
+      lastPaintKey = "";
+      if (map && map.getSource("quakes")) paint(state.tMax); else renderSpace();
     }
-    function magClass(m) { return m >= 7 ? "m7" : m >= 6 ? "m6" : "m5"; }
+    function magClass(m) { return m >= 7 ? "m7" : m >= 6 ? "m6" : m >= 5 ? "m5" : "m4"; }
     function relTime(ms) {
       const s = Math.max(0, (Date.now() - ms) / 1000);
       if (s < 60) return "hace segundos";
@@ -772,7 +879,7 @@
         map.addLayer({
           id: "heat", type: "heatmap", source: "quakes", maxzoom: 4.5,
           paint: {
-            "heatmap-weight": ["interpolate", ["linear"], ["get", "mag"], 5, 0.25, 8, 1],
+            "heatmap-weight": ["interpolate", ["linear"], ["get", "mag"], 4, 0.08, 5, 0.25, 8, 1],
             "heatmap-intensity": 1.1,
             "heatmap-radius": 28,
             "heatmap-opacity": 0.42,
@@ -788,21 +895,22 @@
         map.addLayer({
           id: "glow", type: "circle", source: "quakes",
           paint: {
-            "circle-radius": ["interpolate", ["linear"], ["get", "mag"], 5, 10, 6, 16, 7, 26, 8, 36],
+            "circle-radius": ["interpolate", ["linear"], ["get", "mag"], 4, 6, 5, 10, 6, 16, 7, 26, 8, 36],
             "circle-color": [
               "interpolate", ["linear"], ["get", "mag"],
-              5, "#3ee0ff", 6, "#ffc53d", 7, "#ff4d6d"
+              4, "#3ee6a6", 5, "#3ee0ff", 6, "#ffc53d", 7, "#ff4d6d"
             ],
             "circle-opacity": 0.18, "circle-blur": 0.8
           }
         });
         map.addLayer({
           id: "quakes", type: "circle", source: "quakes",
+          layout: { "circle-sort-key": ["get", "mag"] },
           paint: {
-            "circle-radius": ["interpolate", ["linear"], ["get", "mag"], 5, 5, 6, 8, 7, 13, 8, 18],
+            "circle-radius": ["interpolate", ["linear"], ["get", "mag"], 4, 3.5, 5, 5, 6, 8, 7, 13, 8, 18],
             "circle-color": [
               "interpolate", ["linear"], ["get", "mag"],
-              5, "#3ee0ff", 6, "#ffc53d", 7, "#ff4d6d"
+              4, "#3ee6a6", 5, "#3ee0ff", 6, "#ffc53d", 7, "#ff4d6d"
             ],
             "circle-stroke-width": 1.2,
             "circle-stroke-color": "rgba(255,255,255,.45)",
@@ -821,9 +929,13 @@
       });
     })();
 
+    let lastPaintKey = "";
     function paint(upto) {
       if (!map.getSource("quakes")) return;
       const list = filtered(upto);
+      const key = [state.dataVer, state.minMag, state.query, state.selected, list.length].join("|");
+      if (key === lastPaintKey) { renderSpace(); return; }
+      lastPaintKey = key;
       map.getSource("quakes").setData(toFC(list));
       renderList(list);
       renderKpis(list);
@@ -893,11 +1005,10 @@
         <p>${fmt.format(p.time)} (Lima) · ${relTime(p.time)}<br>Profundidad ${depth.toFixed(1)} km
           ${p.tsunami ? " · posible tsunami" : ""}
           ${p.alert ? " · alerta PAGER " + esc(p.alert) : ""}</p>
-        <p>Campo en esa hora: ${(() => { const k = kpAt(p.time); return k == null ? "Kp no disponible" : "Kp " + k.toFixed(1) + (k >= 5 ? " · tormenta geomagnética" : k >= 4 ? " · activo" : " · quieto"); })()}</p>
+        <p>Campo en esa hora: ${(() => { const k = kpAt(p.time); return k == null ? "Kp no disponible" : "Kp " + kpText(k) + " · " + kpInfo(k).name + (kpLevel(k) >= 5 ? " (tormenta geomagnética)" : ""); })()}</p>
         ${/^https:\/\//.test(p.url || "") ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">Ficha USGS</a>` : ""}
       `;
       box.classList.add("show");
-      const lg = document.querySelector(".legend"); if (lg) lg.style.visibility = "hidden";
       if (fly) map.flyTo({ center: [lng, lat], zoom: Math.min(4.0, Math.max(map.getZoom(), 3.4)), speed: 0.9, curve: 1.4 });
     }
 
@@ -935,8 +1046,9 @@
         if (!res.ok) throw new Error("HTTP " + res.status);
         const data = await res.json();
         const week = Date.now() - 7 * 86400000;
+        state.dataVer = (state.dataVer || 0) + 1;
         state.all = (data.features || [])
-          .filter((f) => f.properties && f.properties.mag >= 5 && f.properties.time >= week && f.geometry)
+          .filter((f) => f.properties && f.properties.mag >= MIN_MAG && f.properties.time >= week && f.geometry)
           .sort((a, b) => b.properties.time - a.properties.time);
         maybeAlert(state.all);
         state.all.forEach((f) => state.seen.add(f.id));
@@ -985,7 +1097,6 @@
     document.getElementById("btnKpClose").onclick = () => setKpSheet(false);
     function closeDetail() {
       document.getElementById("detail").classList.remove("show");
-      const lg = document.querySelector(".legend"); if (lg) lg.style.visibility = "";
     }
     document.addEventListener("keydown", (e) => { if (e.key === "Escape") { setKpSheet(false); closeDetail(); } });
     if (isMobile()) document.getElementById("btnPlay").textContent = playLabel(false);
