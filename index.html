@@ -830,11 +830,12 @@
         return true;
       });
     }
+    // El mapa solo necesita mag y code; ordenar de menor a mayor deja los sismos grandes encima
+    // sin usar circle-sort-key (que obliga a reordenar en cada tile).
     function toFC(list) {
-      return { type: "FeatureCollection", features: list.map((f) => ({
-        ...f,
-        properties: { ...f.properties, mag: f.properties.mag || 0 }
-      })) };
+      return { type: "FeatureCollection", features: list
+        .map((f) => ({ type: "Feature", geometry: f.geometry, properties: { mag: f.properties.mag || 0, code: f.properties.code } }))
+        .sort((a, b) => a.properties.mag - b.properties.mag) };
     }
 
     async function loadStyle() {
@@ -894,6 +895,8 @@
         });
         map.addLayer({
           id: "glow", type: "circle", source: "quakes",
+          // El halo difuminado es lo más caro de dibujar: solo para M ≥ 5.
+          filter: [">=", ["get", "mag"], 5],
           paint: {
             "circle-radius": ["interpolate", ["linear"], ["get", "mag"], 4, 6, 5, 10, 6, 16, 7, 26, 8, 36],
             "circle-color": [
@@ -905,7 +908,6 @@
         });
         map.addLayer({
           id: "quakes", type: "circle", source: "quakes",
-          layout: { "circle-sort-key": ["get", "mag"] },
           paint: {
             "circle-radius": ["interpolate", ["linear"], ["get", "mag"], 4, 3.5, 5, 5, 6, 8, 7, 13, 8, 18],
             "circle-color": [
@@ -920,9 +922,8 @@
         map.on("mouseenter", "quakes", () => map.getCanvas().style.cursor = "pointer");
         map.on("mouseleave", "quakes", () => map.getCanvas().style.cursor = "");
         map.on("click", "quakes", (e) => {
-          const f = e.features[0];
-          const orig = state.all.find((x) => x.id === f.id || x.properties.code === f.properties.code);
-          select(orig || f, true);
+          const orig = byCode(e.features[0].properties.code);
+          if (orig) select(orig, true);
         });
         fetchQuakes();
         fetchSpace();
@@ -933,7 +934,7 @@
     function paint(upto) {
       if (!map.getSource("quakes")) return;
       const list = filtered(upto);
-      const key = [state.dataVer, state.minMag, state.query, state.selected, list.length].join("|");
+      const key = [state.dataVer, state.minMag, state.query, list.length].join("|");
       if (key === lastPaintKey) { renderSpace(); return; }
       lastPaintKey = key;
       map.getSource("quakes").setData(toFC(list));
@@ -965,44 +966,53 @@
         el.innerHTML = '<div class="msg">No hay eventos con ese filtro.</div>';
         return;
       }
-      el.innerHTML = "";
-      list.forEach((f) => {
+      // Un solo innerHTML (en vez de 300 botones creados uno a uno); el clic se maneja por delegación.
+      el.innerHTML = list.map((f) => {
         const p = f.properties;
         const depth = f.geometry.coordinates[2];
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "item" + (state.selected === p.code ? " sel" : "");
-        btn.innerHTML = `
+        return `<button type="button" class="item${state.selected === p.code ? " sel" : ""}" data-code="${esc(p.code)}">
           <div class="row">
             <span class="mag ${magClass(p.mag)}">M ${p.mag.toFixed(1)}</span>
             <span class="place">${esc(p.place || "ubicación desconocida")}</span>
           </div>
           <div class="meta">
             <span class="tag">${relTime(p.time)}</span>
-            <span class="tag">${fmt.format(p.time)} Lima</span>
+            <span class="tag">${limaTime(f)} Lima</span>
             <span class="tag">${depth.toFixed(0)} km</span>
             ${p.tsunami ? '<span class="tag hot">tsunami watch</span>' : ""}
             ${p.alert ? `<span class="tag hot">PAGER ${esc(p.alert)}</span>` : ""}
             ${p.mag >= 7 ? '<span class="tag hot">muy fuerte</span>' : ""}
             ${kpTag(kpAt(p.time))}
-          </div>`;
-        btn.addEventListener("click", () => select(f, true));
-        el.appendChild(btn);
-      });
+          </div></button>`;
+      }).join("");
     }
+    // Formatear fechas con Intl es lento; se calcula una vez por sismo.
+    function limaTime(f) {
+      return f._lima || (f._lima = fmt.format(f.properties.time));
+    }
+    function byCode(code) { return state.all.find((x) => x.properties.code === code); }
+    document.getElementById("list").addEventListener("click", (e) => {
+      const btn = e.target.closest(".item");
+      const f = btn && byCode(btn.dataset.code);
+      if (f) select(f, true);
+    });
 
     function select(f, fly) {
       const p = f.properties;
       const [lng, lat, depth] = f.geometry.coordinates;
       state.selected = p.code;
-      paint(state.tMax);
-      const html = `<strong>M ${p.mag.toFixed(1)}</strong><br>${esc(p.place || "ubicación desconocida")}<br>${fmt.format(p.time)} Lima · ${depth.toFixed(0)} km`;
+      // Solo se mueve el resaltado: no hace falta repintar el mapa ni reconstruir la lista.
+      const listEl = document.getElementById("list");
+      listEl.querySelectorAll(".item.sel").forEach((b) => b.classList.remove("sel"));
+      const cur = [...listEl.children].find((b) => b.dataset && b.dataset.code === p.code);
+      if (cur) cur.classList.add("sel");
+      const html = `<strong>M ${p.mag.toFixed(1)}</strong><br>${esc(p.place || "ubicación desconocida")}<br>${limaTime(f)} Lima · ${depth.toFixed(0)} km`;
       popup.setLngLat([lng, lat]).setHTML(html).addTo(map);
       const box = document.getElementById("detail");
       document.getElementById("detailBody").innerHTML = `
         <h3 class="${magClass(p.mag)}">M ${p.mag.toFixed(1)}</h3>
         <p>${esc(p.place)}</p>
-        <p>${fmt.format(p.time)} (Lima) · ${relTime(p.time)}<br>Profundidad ${depth.toFixed(1)} km
+        <p>${limaTime(f)} (Lima) · ${relTime(p.time)}<br>Profundidad ${depth.toFixed(1)} km
           ${p.tsunami ? " · posible tsunami" : ""}
           ${p.alert ? " · alerta PAGER " + esc(p.alert) : ""}</p>
         <p>Campo en esa hora: ${(() => { const k = kpAt(p.time); return k == null ? "Kp no disponible" : "Kp " + kpText(k) + " · " + kpInfo(k).name + (kpLevel(k) >= 5 ? " (tormenta geomagnética)" : ""); })()}</p>
